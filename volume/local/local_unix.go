@@ -16,6 +16,7 @@ import (
 
 	"github.com/docker/docker/errdefs"
 	"github.com/moby/sys/mount"
+	"github.com/moby/sys/mountinfo"
 	"github.com/pkg/errors"
 )
 
@@ -92,6 +93,10 @@ func validateOpts(opts map[string]string) error {
 	return nil
 }
 
+func unmount(path string) {
+	_ = mount.Unmount(path)
+}
+
 func (v *localVolume) mount() error {
 	if v.opts.MountDevice == "" {
 		return fmt.Errorf("missing device in volume options")
@@ -109,6 +114,18 @@ func (v *localVolume) mount() error {
 	}
 	err := mount.Mount(v.opts.MountDevice, v.path, v.opts.MountType, mountOpts)
 	return errors.Wrap(err, "failed to mount local volume")
+}
+
+func (v *localVolume) unmount() error {
+	if v.opts != nil {
+		if err := mount.Unmount(v.path); err != nil {
+			if mounted, mErr := mountinfo.Mounted(v.path); mounted || mErr != nil {
+				return errdefs.System(err)
+			}
+		}
+		v.active.mounted = false
+	}
+	return nil
 }
 
 func (v *localVolume) CreatedAt() (time.Time, error) {
