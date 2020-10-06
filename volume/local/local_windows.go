@@ -35,6 +35,11 @@ func setOpts(v *localVolume, opts map[string]string) error {
 func (v *localVolume) mount() error {
 	return nil
 }
+func (v *localVolume) unmount() error {
+	return nil
+}
+
+func unmount(_ string) {}
 
 func (v *localVolume) CreatedAt() (time.Time, error) {
 	fileInfo, err := os.Stat(v.path)
